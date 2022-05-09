@@ -1,0 +1,1038 @@
+openapi: 3.0.1
+info:
+  title: PW GRAPH
+  description: >-
+    This is a sample server graph server.  You can find out more about    
+    Swagger at [http://swagger.io](http://swagger.io) or on [irc.freenode.net,
+    #swagger](http://swagger.io/irc/).      For this sample, you can use the api
+    key `special-key` to test the authorization     filters.
+  termsOfService: http://swagger.io/terms/
+  contact:
+    email: apiteam@swagger.io
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+externalDocs:
+  description: Find out more about Swagger
+  url: http://swagger.io
+servers:
+  - url: https://graph.swagger.io/v2
+  - url: http://graph.swagger.io/v2
+tags:
+  - name: graph
+    description: Details about your graphs
+  - name: node
+    description: Details about your nodes
+    externalDocs:
+      description: Find out more about our store
+      url: http://swagger.io
+  - name: user
+    description: Operations about user
+    externalDocs:
+      description: Find out more about our store
+      url: http://swagger.io
+
+paths:
+
+  /:
+    get:
+      tags:
+        - homepage
+      summary: Show the homepage
+      responses:
+        '405' : 
+          description: Front page not found
+          content: {}
+      security:
+        - graphDB_auth:
+          - write:graphs
+          - read:graphs
+          
+  /graphs:
+    get:
+      tags:
+        - graph
+      summary: Show user's graphs
+      responses:
+        '405':
+          description: Invalid input
+          content: {}
+      security:
+        - graphDB_auth:
+          - write:graphs
+          - read:graphs
+    put:
+      tags:
+        - graph
+      summary: Add a new template graph
+      operationId: addTemplateGraph
+      requestBody:
+        description: Graph object hosting node network
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Graph'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Graph'
+        required: true
+      responses:
+        '400':
+          description: Invalid template name
+          content: {}
+        '405':
+          description: Validation exception
+          content: {}
+      security:
+        - graphDB_auth:
+          - write:graphs
+          - read:graphs
+      x-codegen-request-body-name: body
+    post:
+      tags:
+        - graph
+      summary: Add a new custom graph
+      operationId: addCustomGraph
+      requestBody:
+        description: Graph object hosting node network
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Node'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Node'
+        required: true
+      responses:
+        '405':
+          description: Invalid input
+          content: {}
+      security:
+        - graphDB_auth:
+          - write:graphs
+          - read:graphs
+      x-codegen-request-body-name: body
+
+  /graphs/{graphId}:
+    get:
+      tags:
+        - graph
+      summary: Find graph by ID
+      description: Returns a graph network
+      operationId: getGraphById
+      parameters:
+        - name: graphId
+          in: path
+          description: ID of graph to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Node'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Node'
+        '400':
+          description: Invalid ID supplied
+          content: {}
+        '404':
+          description: Graph not found
+          content: {}
+      security:
+        - api_key: []
+    put:
+      tags:
+        - graph
+      summary: Adds a new global parameter to the graph
+      operationId: addGraphParameter
+      parameters:
+        - name: graphId
+          in: path
+          description: ID of the graph that needs to be updated
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              required:
+                - name
+                - parameterType
+                - parameterValue
+              properties:
+                name:
+                  type: string
+                  description: The name of the added parameter
+                parameterType:
+                  type: string
+                  description: The type of parameter added to the node
+                parameterValue:
+                  type: string
+                  description: The value of the parameter added to the node
+        required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Node'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Node'
+        '400':
+          description: Invalid ID supplied
+          content: {}
+        '404':
+          description: Node not found
+          content: {}
+        '405':
+          description: Value does not match parameter type
+          content: {}
+      security:
+        - api_key: []
+    post:
+      tags:
+        - graph
+      summary: Edit graph filter view
+      operationId: addFilterView
+      parameters:
+        - name: graphId
+          in: path
+          description: ID of the node that needs to be updated
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              properties:
+                viewIndex:
+                  type: integer
+                  description: If provided, specifies the view to be replaced
+                  format: int64
+                targetParameter:
+                  type: string
+                  description: >-
+                    Name of the target trigger parameter. If not provided,
+                    deletes the filtered view
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Node'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Node'
+        '400':
+          description: Invalid parameter ID
+          content: {}
+        '404':
+          description: Parameter not found
+          content: {}
+      security:
+        - api_key: []
+        - graphDB_auth:
+          - write:graphs
+          - read:graphs
+    delete:
+      tags:
+        - graph
+      summary: Deletes a graph
+      operationId: deleteGraph
+      parameters:
+        - name: api_key
+          in: header
+          schema:
+            type: string
+        - name: graphId
+          in: path
+          description: Id of the graph to delete
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '400':
+          description: Invalid ID supplied
+          content: {}
+        '404':
+          description: Graph not found
+          content: {}
+      security:
+        - graphDB_auth:
+          - write:graphs
+          - read:graphs
+    patch:
+      tags:
+        - graph
+      summary: Updates a global parameter
+      operationId: editGraphParameter
+      parameters:
+        - name: graphId
+          in: path
+          description: ID of the graph that needs to be updated
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: The name of the modified parameter
+                parameterValue:
+                  type: string
+                  description: >-
+                    The value of the edited parameter. If not provided, the
+                    parameter is deleted
+        required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Node'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Node'
+        '400':
+          description: Invalid ID supplied
+          content: {}
+        '404':
+          description: Node not found
+          content: {}
+        '405':
+          description: Value does not match parameter type
+          content: {}
+      security:
+        - api_key: []
+  /nodes:
+    get:
+      tags:
+        - node
+      summary: Show nodes in the selected graph
+      responses:
+        '405':
+          description: Invalid input
+          content: {}
+      security:
+        - graphDB_auth:
+          - write:graphs
+          - read:graphs
+    put:
+      tags:
+        - node
+      summary: Add template node to the graph
+      operationId: addTemplateNode
+      requestBody:
+        description: Node object that needs to be added to the network
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Node'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Node'
+        required: true
+      responses:
+        '400':
+          description: Invalid ID supplied
+          content: {}
+        '404':
+          description: Node not found
+          content: {}
+        '405':
+          description: Validation exception
+          content: {}
+      security:
+        - graphDB_auth:
+          - write:graphs
+          - read:graphs
+      x-codegen-request-body-name: body
+    post:
+      tags:
+        - node
+      summary: Add a custom node to the graph
+      operationId: addCustomNode
+      requestBody:
+        description: Node object that needs to be added to the network
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Node'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Node'
+        required: true
+      responses:
+        '405':
+          description: Invalid input
+          content: {}
+      security:
+        - graphDB_auth:
+          - write:graphs
+          - read:graphs
+      x-codegen-request-body-name: body
+  /nodes/{nodeId}:
+    get:
+      tags:
+        - node
+      summary: Find node by ID
+      description: Returns a single node
+      operationId: getNodeById
+      parameters:
+        - name: nodeId
+          in: path
+          description: ID of node to return
+          required: true
+          schema:
+            minimum: 1
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Node'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Node'
+        '400':
+          description: Invalid ID supplied
+          content: {}
+        '404':
+          description: Node not found
+          content: {}
+      security:
+        - api_key: []
+    put:
+      tags:
+        - node
+      summary: Adds a new parameter to the node
+      operationId: addNodeParameter
+      parameters:
+        - name: nodeId
+          in: path
+          description: ID of the node that needs to be updated
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              required:
+                - name
+                - parameterType
+                - parameterValue
+              properties:
+                name:
+                  type: string
+                  description: The name of the added parameter
+                parameterType:
+                  type: string
+                  description: The type of parameter added to the node
+                parameterValue:
+                  type: string
+                  description: The value of the parameter added to the node
+        required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Node'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Node'
+        '400':
+          description: Invalid ID supplied
+          content: {}
+        '404':
+          description: Node not found
+          content: {}
+        '405':
+          description: Value does not match parameter type
+          content: {}
+      security:
+        - api_key: []
+    post:
+      tags:
+        - node
+      summary: Add node trigger
+      operationId: addNodeTrigger
+      parameters:
+        - name: nodeId
+          in: path
+          description: ID of the node that needs to be updated
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              required:
+                - targetParameter
+                - triggerType
+              properties:
+                triggerIndex:
+                  type: integer
+                  description: If provided, specifies the trigger to be replaced
+                  format: int64
+                targetNodeId:
+                  type: integer
+                  description: >-
+                    The ID of the target node. If not provided, global graph
+                    variables will be used
+                  format: int64
+                targetParameter:
+                  type: string
+                  description: Name of the target trigger parameter
+                triggerType:
+                  type: string
+                  description: The type of trigger condition
+        required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Node'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Node'
+        '400':
+          description: Invalid parameter ID
+          content: {}
+        '404':
+          description: Parameter not found
+          content: {}
+        '405':
+          description: Trigger type mismatches parameter value
+          content: {}
+        '406':
+          description: Invalid trigger type
+          content: {}
+      security:
+        - api_key: []
+        - graphDB_auth:
+          - write:graphs
+          - read:graphs
+    delete:
+      tags:
+        - node
+      summary: Deletes a node
+      operationId: deleteNode
+      parameters:
+        - name: api_key
+          in: header
+          schema:
+            type: string
+        - name: nodeId
+          in: path
+          description: Node ID to delete
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '400':
+          description: Invalid ID supplied
+          content: {}
+        '404':
+          description: Node not found
+          content: {}
+      security:
+        - graphDB_auth:
+          - write:graphs
+          - read:graphs
+    patch:
+      tags:
+        - node
+      summary: Updates a node parameter
+      operationId: editNodeParameter
+      parameters:
+        - name: nodeId
+          in: path
+          description: ID of the node that needs to be updated
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: The name of the modified parameter
+                parameterValue:
+                  type: string
+                  description: >-
+                    The value of the edited parameter. If not provided, the
+                    parameter is deleted
+        required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Node'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Node'
+        '400':
+          description: Invalid ID supplied
+          content: {}
+        '404':
+          description: Node not found
+          content: {}
+        '405':
+          description: Value does not match parameter type
+          content: {}
+      security:
+        - api_key: []
+        
+  /node/findByStatus:
+    get:
+      tags:
+        - node
+      summary: Finds node by status
+      description: Multiple status values can be provided with comma separated strings
+      operationId: findNodesByStatus
+      parameters:
+        - name: status
+          in: query
+          description: Status values that need to be considered for filter
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              default: Pending
+              enum:
+                - Pending
+                - Complete
+                - Failed
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/xml:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Node'
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Node'
+        '400':
+          description: Invalid status value
+          content: {}
+      security:
+        - graphDB_auth:
+          - write:graphs
+          - read:graphs
+  /user:
+    post:
+      tags:
+        - user
+      summary: Create user
+      description: This can only be done by the logged in user.
+      operationId: createUser
+      requestBody:
+        description: Created user object
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      responses:
+        default:
+          description: successful operation
+          content: {}
+      x-codegen-request-body-name: body
+  /user/login:
+    get:
+      tags:
+        - user
+      summary: Logs user into the system
+      operationId: loginUser
+      parameters:
+        - name: username
+          in: query
+          description: The user name for login
+          required: true
+          schema:
+            type: string
+        - name: password
+          in: query
+          description: The password for login in clear text
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          headers:
+            X-Rate-Limit:
+              description: calls per hour allowed by the user
+              schema:
+                type: integer
+                format: int32
+            X-Expires-After:
+              description: date in UTC when token expires
+              schema:
+                type: string
+                format: date-time
+          content:
+            application/xml:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: string
+        '400':
+          description: Invalid username/password supplied
+          content: {}
+  /user/logout:
+    get:
+      tags:
+        - user
+      summary: Logs out current logged in user session
+      operationId: logoutUser
+      responses:
+        default:
+          description: successful operation
+          content: {}
+  /user/{username}:
+    get:
+      tags:
+        - user
+      summary: Get user by user name
+      operationId: getUserByName
+      parameters:
+        - name: username
+          in: path
+          description: 'The name that needs to be fetched. Use user1 for testing. '
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/User'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid username supplied
+          content: {}
+        '404':
+          description: User not found
+          content: {}
+    put:
+      tags:
+        - user
+      summary: Updated user
+      description: This can only be done by the logged in user.
+      operationId: updateUser
+      parameters:
+        - name: username
+          in: path
+          description: name that need to be updated
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Updated user object
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      responses:
+        '400':
+          description: Invalid user supplied
+          content: {}
+        '404':
+          description: User not found
+          content: {}
+      x-codegen-request-body-name: body
+    delete:
+      tags:
+        - user
+      summary: Delete user
+      description: This can only be done by the logged in user.
+      operationId: deleteUser
+      parameters:
+        - name: username
+          in: path
+          description: The name that needs to be deleted
+          required: true
+          schema:
+            type: string
+      responses:
+        '400':
+          description: Invalid username supplied
+          content: {}
+        '404':
+          description: User not found
+          content: {}
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        phone:
+          type: string
+        userStatus:
+          type: integer
+          description: User Status
+          format: int32
+        graphs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Graph'
+      xml:
+        name: User
+    Parameter:
+      required:
+        - parameterID
+        - parameterType
+      type: object
+      properties:
+        parameterID:
+          type: integer
+          description: Unique parameter identifier
+          format: int64
+        parameterName:
+          type: string
+        parameterType:
+          type: string
+          enum:
+            - integer
+            - string
+            - boolean
+            - valueArray
+            - numericalPair
+        parameterValue:
+          type: string
+          description: The string to be cast into appropriate value type
+      xml:
+        name: Parameter
+    Action:
+      required:
+        - actionType
+        - sourceParameterID
+        - targetParameterID
+      type: object
+      properties:
+        actionType:
+          type: string
+          description: Action type
+          enum:
+            - modifyTarget
+            - switchTargetState
+            - addToTarget
+            - subtractFromTarget
+            - multiplyTarget
+            - divideTarget
+        sourceParameterID:
+          type: integer
+          format: int64
+        targetParameterID:
+          type: integer
+          format: int64
+      xml:
+        name: Action
+    Trigger:
+      required:
+        - sourceParameterID
+        - targetParameterID
+        - triggerType
+      type: object
+      properties:
+        triggerType:
+          type: string
+          description: Trigger type
+          enum:
+            - biggerThanTarget
+            - smallerThanTarget
+            - equalToTarget
+            - betweenSources
+            - matchTargetToList
+        sourceParameterID:
+          type: integer
+          format: int64
+        targetParameterID:
+          type: integer
+          format: int64
+      xml:
+        name: Trigger
+    Relation:
+      required:
+        - relationID
+      type: object
+      properties:
+        relationID:
+          type: integer
+          format: int64
+        triggers:
+          type: array
+          description: The triggers used by the relation
+          items:
+            $ref: '#/components/schemas/Trigger'
+        actions:
+          type: array
+          description: The actions used by the relation
+          items:
+            $ref: '#/components/schemas/Action'
+        internalParameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Parameter'
+    Node:
+      required:
+        - nodeID
+      type: object
+      properties:
+        nodeID:
+          type: integer
+          format: int64
+        status:
+          type: string
+          description: Node status
+          default: Pending
+          enum:
+            - Pending
+            - Complete
+            - Failed
+        parameters:
+          type: array
+          description: Node internal parameters
+          items:
+            $ref: '#/components/schemas/Parameter'
+        relations:
+          type: array
+          xml:
+            name: relation
+            wrapped: true
+          items:
+            $ref: '#/components/schemas/Relation'
+      xml:
+        name: Node
+    View:
+      type: object
+      properties:
+        viewID:
+          type: integer
+          format: int64
+        filterParameters:
+          type: array
+          description: The parameters used for filtering
+          items:
+            $ref: '#/components/schemas/Parameter'
+      xml:
+        name: View
+    Graph:
+      required:
+        - graphID
+      type: object
+      properties:
+        graphID:
+          type: integer
+          format: int64
+        parameters:
+          type: array
+          description: The global parameters of the graph
+          items:
+            $ref: '#/components/schemas/Parameter'
+        views:
+          type: array
+          items:
+            $ref: '#/components/schemas/View'
+        defaultView:
+          type: integer
+          description: The unique identifier of the default view
+          format: int64
+      xml:
+        name: Graph
+
+        
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        type:
+          type: string
+        message:
+          type: string
+          
+          
+  securitySchemes:
+    graphDB_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: http://petstore.swagger.io/oauth/dialog
+          scopes:
+            write:graphs: modify graphs in your account
+            read:graphs: read your graphs
+    api_key:
+      type: apiKey
+      name: api_key
+      in: header
